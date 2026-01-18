@@ -1,46 +1,40 @@
 #!/bin/bash
 #===============================================
-# Description: DIY script
-# File name: diy-script.sh
-# Lisence: MIT
-# Author: P3TERX
-# Blog: https://p3terx.com
+# Description: DIY script Part 2 (System Settings for x86)
 #===============================================
 
-# update ubus git HEAD
-cp -f $GITHUB_WORKSPACE/configfiles/ubus_Makefile package/system/ubus/Makefile
+date_version=$(date +"%Y%m%d%H")
 
-# 近期istoreos网站文件服务器不稳定，临时增加一个自定义下载网址
-sed -i "s/push @mirrors, 'https:\/\/mirror2.openwrt.org\/sources';/&\\npush @mirrors, 'https:\/\/github.com\/xiaomeng9597\/files\/releases\/download\/iStoreosFile';/g" scripts/download.pl
+# --- 1. 定义您的品牌名称 ---
+author="MuFVps"
 
-# 修改uhttpd配置文件，启用nginx
-# sed -i "/.*uhttpd.*/d" .config
-# sed -i '/.*\/etc\/init.d.*/d' package/network/services/uhttpd/Makefile
-# sed -i '/.*.\/files\/uhttpd.init.*/d' package/network/services/uhttpd/Makefile
-sed -i "s/:80/:81/g" package/network/services/uhttpd/files/uhttpd.config
-sed -i "s/:443/:4443/g" package/network/services/uhttpd/files/uhttpd.config
-cp -a $GITHUB_WORKSPACE/configfiles/etc/* package/base-files/files/etc/
-# ls package/base-files/files/etc/
-echo "CONFIG_PACKAGE_nginx=y
-CONFIG_PACKAGE_nginx-ssl=y
-CONFIG_PACKAGE_nginx-ssl-util=y
-CONFIG_PACKAGE_nginx-util=y
-CONFIG_PACKAGE_nginx-mod-luci=y
-CONFIG_PACKAGE_luci-nginx=y
-CONFIG_PACKAGE_default-settings=y" >> .config
+# --- 2. 修改固件描述与Release信息 (登录页和详情页显示) ---
+# 将 xiaomeng9597 替换为 MuFVps
+sed -i "s/DISTRIB_DESCRIPTION.*/DISTRIB_DESCRIPTION='%D %V ${date_version} by ${author}'/g" package/base-files/files/etc/openwrt_release
+sed -i "s/OPENWRT_RELEASE.*/OPENWRT_RELEASE=\"%D %V ${date_version} by ${author}\"/g" package/base-files/files/usr/lib/os-release
 
+# --- 3. 修改主机名 (终端提示符 root@MuFVps) ---
+sed -i "s/iStoreOS/${author}/g" package/base-files/files/bin/config_generate
 
-# 集成CPU性能跑分脚本
-echo "CONFIG_PACKAGE_coremark=y" >> .config
-cp -f $GITHUB_WORKSPACE/configfiles/coremark/coremark-x86.sh package/base-files/files/bin/coremark.sh
-chmod 755 package/base-files/files/bin/coremark.sh
+# --- 4. 修改 SSH 登录 Banner (字符画 Logo) ---
+cat > package/base-files/files/etc/banner << EOF
+  __  __       _____ __      __
+ |  \/  |     |  ___|\ \    / /
+ | \  / |_   _| |_    \ \  / /_ __  ___
+ | |\/| | | | |  _|    \ \/ /| '_ \/ __|
+ | |  | | |_| | |       \  / | |_) \__ \\
+ |_|  |_|\__,_|_|        \/  | .__/|___/
+                             | |
+                             |_|
+ -----------------------------------------------------
+ ${author} iStoreOS x86 Build (${date_version})
+ -----------------------------------------------------
+EOF
 
+# --- 5. (可选) x86 固件默认设置调整 ---
+# 默认 IP 是 192.168.100.1，如果您想修改为 192.168.1.1，请取消下面这行的注释 (#)
+# sed -i 's/192.168.100.1/192.168.1.1/g' package/base-files/files/bin/config_generate
 
-# iStoreOS-settings
+# --- 6. 确保 x86 必要的依赖设置 (参考原仓库逻辑) ---
+# 拉取 iStoreOS 风格设置 (这对保持界面风格很重要)
 git clone --depth=1 -b main https://github.com/xiaomeng9597/istoreos-settings package/default-settings
-
-
-# 定时限速插件
-echo "CONFIG_PACKAGE_luci-app-eqosplus=y
-CONFIG_PACKAGE_luci-i18n-eqosplus-zh-cn=y" >> .config
-git clone --depth=1 https://github.com/sirpdboy/luci-app-eqosplus package/luci-app-eqosplus
