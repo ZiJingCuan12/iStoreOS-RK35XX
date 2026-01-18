@@ -1,20 +1,16 @@
 #!/bin/bash
 #===============================================
-# Description: DIY script
-# File name: diy-script.sh
-# Lisence: MIT
-# Author: P3TERX
-# Blog: https://p3terx.com
+# Description: DIY script Part 1 (Add Feeds)
 #===============================================
 
-# 修改版本为编译日期，数字类型。
+# 修改版本为编译日期
 date_version=$(date +"%Y%m%d%H")
 echo $date_version > version
 
-# 为iStoreOS固件版本加上编译作者
-author="xiaomeng9597"
-sed -i "s/DISTRIB_DESCRIPTION.*/DISTRIB_DESCRIPTION='%D %V ${date_version} by ${author}'/g" package/base-files/files/etc/openwrt_release
-sed -i "s/OPENWRT_RELEASE.*/OPENWRT_RELEASE=\"%D %V ${date_version} by ${author}\"/g" package/base-files/files/usr/lib/os-release
-
-# 拉取我的软件包仓库
+# --- 1. 保留原有的软件包仓库 (防止依赖缺失) ---
 echo 'src-git xmpackages https://github.com/xiaomeng9597/openwrt-packages2.git;main' >> feeds.conf.default
+
+# --- 2. 添加您需要的插件源 (Passwall & OpenClash) ---
+echo "src-git passwall_pkg https://github.com/xiaorouji/openwrt-passwall.git;packages" >> feeds.conf.default
+echo "src-git passwall_luci https://github.com/xiaorouji/openwrt-passwall.git;luci" >> feeds.conf.default
+echo "src-git openclash https://github.com/vernesong/OpenClash.git" >> feeds.conf.default
